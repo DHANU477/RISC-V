@@ -1,5 +1,3 @@
-
-
 `timescale 1ns/1ps
 
 module riscv_3stage_top (
@@ -24,7 +22,7 @@ module riscv_3stage_top (
 
     reg [31:0] instr_reg;
     always @(posedge clk)
-        instr_reg <= imem[pc[31:2]];
+        instr_reg <= imem[pc[9:2]];
 
     assign instr = instr_reg;
 
@@ -313,25 +311,18 @@ endmodule
 `default_nettype none
 
 module baud_rate_gen #(
-    parameter CLK_FREQ  = 50_000_000,   // System clock frequency
-    parameter BAUD_RATE = 115200        // Desired baud rate
+    parameter CLK_FREQ  = 50000000,
+    parameter BAUD_RATE = 115200
 )(
     input  wire clk,
     input  wire reset,
-
-    output reg  txclk_en,   // 1 pulse per bit period
-    output reg  rxclk_en    // 1 pulse per 1/16 bit period
+    output reg  txclk_en,
+    output reg  rxclk_en
 );
 
-    // ----------------------------------------------------
-    // Divider calculations
-    // ----------------------------------------------------
     localparam integer TX_DIV = CLK_FREQ / BAUD_RATE;
     localparam integer RX_DIV = CLK_FREQ / (BAUD_RATE * 16);
 
-    // ----------------------------------------------------
-    // Counters
-    // ----------------------------------------------------
     reg [31:0] tx_cnt;
     reg [31:0] rx_cnt;
 
@@ -342,27 +333,183 @@ module baud_rate_gen #(
             txclk_en <= 0;
             rxclk_en <= 0;
         end else begin
-            //------------------------------------------------
-            // TX Baud Enable
-            //------------------------------------------------
-            if (tx_cnt == TX_DIV - 1) begin
+            // TX
+            if (tx_cnt >= TX_DIV-1) begin
                 tx_cnt   <= 0;
-                txclk_en <= 1;      // 1-cycle pulse
+                txclk_en <= 1;
             end else begin
                 tx_cnt   <= tx_cnt + 1;
                 txclk_en <= 0;
             end
 
-            //------------------------------------------------
-            // RX Baud Enable (16x oversampling)
-            //------------------------------------------------
-            if (rx_cnt == RX_DIV - 1) begin
+            // RX (16x)
+            if (rx_cnt == RX_DIV-1) begin
                 rx_cnt   <= 0;
-                rxclk_en <= 1;      // 1-cycle pulse
+                rxclk_en <= 1;
             end else begin
                 rx_cnt   <= rx_cnt + 1;
                 rxclk_en <= 0;
             end
+        end
+    end
+
+endmodule
+
+`default_nettype none
+
+module tx_fsm(
+    input  wire       clk,
+    input  wire       reset,
+    input  wire [7:0] tx_data,
+    input  wire       tx_start,
+    input  wire       txclk_en,
+    output reg        tx_out,
+    output reg        tx_busy,
+    output reg        tx_done
+);
+
+    localparam IDLE  = 2'd0;
+    localparam START = 2'd1;
+    localparam DATA  = 2'd2;
+    localparam STOP  = 2'd3;
+
+    reg [1:0] state;
+    reg [2:0] bit_index;
+    reg [7:0] data_reg;
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            state     <= IDLE;
+            tx_out    <= 1'b1;
+            tx_busy   <= 0;
+            tx_done   <= 0;
+            bit_index <= 0;
+        end else begin
+            tx_done <= 0;
+
+            case (state)
+
+                IDLE: begin
+                    tx_out  <= 1'b1;
+                    tx_busy <= 0;
+                    if (tx_start) begin
+                        data_reg <= tx_data;
+                        tx_busy  <= 1;
+                        state    <= START;
+                    end
+                end
+
+                START: if (txclk_en) begin
+                    tx_out    <= 1'b0;
+                    bit_index <= 0;
+                    state     <= DATA;
+                end
+
+                DATA: if (txclk_en) begin
+                    tx_out <= data_reg[bit_index];
+                    if (bit_index == 3'd7)
+                        state <= STOP;
+                    else
+                        bit_index <= bit_index + 1;
+                end
+
+                STOP: if (txclk_en) begin
+                    tx_out  <= 1'b1;
+                    tx_busy <= 0;
+                    tx_done <= 1;
+                    state   <= IDLE;
+                end
+
+            endcase
+        end
+    end
+
+endmodule
+
+`default_nettype none
+
+module rx_fsm(
+    input  wire       clk,
+    input  wire       reset,
+    input  wire       rx_in,
+    input  wire       rxclk_en,
+    output reg  [7:0] rx_data,
+    output reg        rx_done,
+    output reg        rx_error
+);
+
+    localparam IDLE  = 2'd0;
+    localparam START = 2'd1;
+    localparam DATA  = 2'd2;
+    localparam STOP  = 2'd3;
+
+    reg [1:0] state;
+    reg [2:0] bit_index;
+    reg [7:0] data_reg;
+    reg [3:0] sample_cnt;
+
+    // Synchronizer for rx_in
+    reg rx_sync1, rx_sync2;
+    always @(posedge clk) begin
+        rx_sync1 <= rx_in;
+        rx_sync2 <= rx_sync1;
+    end
+
+    always @(posedge clk or posedge reset) begin
+        if (reset) begin
+            state      <= IDLE;
+            rx_done    <= 0;
+            rx_error   <= 0;
+            rx_data    <= 0;
+            bit_index  <= 0;
+            sample_cnt <= 0;
+        end else begin
+            rx_done <= 0;
+
+            case (state)
+
+                IDLE: begin
+                    if (!rx_sync2) begin
+                        state      <= START;
+                        sample_cnt <= 0;
+                    end
+                end
+
+                START: if (rxclk_en) begin
+                    if (sample_cnt == 7) begin
+                        if (!rx_sync2) begin
+                            state      <= DATA;
+                            bit_index  <= 0;
+                            sample_cnt <= 0;
+                        end else begin
+                            state <= IDLE;
+                        end
+                    end else
+                        sample_cnt <= sample_cnt + 1;
+                end
+
+                DATA: if (rxclk_en) begin
+                    if (sample_cnt == 15) begin
+                        data_reg[bit_index] <= rx_sync2;
+                        sample_cnt <= 0;
+                        if (bit_index == 7)
+                            state <= STOP;
+                        else
+                            bit_index <= bit_index + 1;
+                    end else
+                        sample_cnt <= sample_cnt + 1;
+                end
+
+                STOP: if (rxclk_en) begin
+                    if (!rx_sync2)
+                        rx_error <= 1;
+
+                    rx_data <= data_reg;
+                    rx_done <= 1;
+                    state   <= IDLE;
+                end
+
+            endcase
         end
     end
 
