@@ -155,22 +155,27 @@ class RISCVAssembler:
         
         return hex_output
 
-%%writefile program.s
-addi x1, x0, 5
-addi x2, x0, 7
-add x3, x1, x2
-sw x3, 0(x0)
-
-
-
-asm = RISCVAssembler()
-
-with open("program.s", "r") as f:
-    test_program = f.read()
-
-hex_code = asm.assemble(test_program)
-
-with open("instruction.hex", "w") as f:
-    f.write("\n".join(hex_code))
-
-print("Assembly finished. Output: instruction.hex")
+if __name__ == "__main__":
+    import sys
+    if len(sys.argv) < 2:
+        print("Usage: python assembler.py input.s [output.hex]")
+        sys.exit(1)
+    
+    input_file = sys.argv[1]
+    output_file = sys.argv[2] if len(sys.argv) > 2 else "instruction.hex"
+    
+    asm = RISCVAssembler()
+    try:
+        with open(input_file, "r") as f:
+            program = f.read()
+        
+        hex_results = asm.assemble(program)
+        
+        with open(output_file, "w") as f:
+            for line in hex_results:
+                f.write(line + "\n")
+        
+        print(f"Successfully assembled {input_file} to {output_file}")
+    except Exception as e:
+        print(f"Error: {e}")
+        sys.exit(1)

@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 module data_memory (
     input clk,
     input mem_read,
@@ -15,11 +17,11 @@ module data_memory (
             dmem[i] = 32'b0;
     end
 
-    assign read_data = dmem[addr[31:2]];
+    assign read_data = dmem[addr[9:2]];
 
     always @(posedge clk) begin
         if (mem_write)
-            dmem[addr[31:2]] <= write_data;
+            dmem[addr[9:2]] <= write_data;
     end
 
 endmodule

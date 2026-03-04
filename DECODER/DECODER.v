@@ -1,3 +1,5 @@
+`timescale 1ns/1ps
+
 /* =========================
    DECODER
 ========================= */
@@ -13,7 +15,8 @@ module decoder (
     output reg  [1:0]  mem_size,
     output reg         mem_signext,
     output reg         reg_write,
-    output reg  [1:0]  wb_sel
+    output reg  [1:0]  wb_sel,
+    output reg  [1:0]  alu_src1_sel // 0:rs1, 1:pc, 2:zero
 );
     assign rs1 = inst[19:15];
     assign rs2 = inst[24:20];
@@ -30,8 +33,15 @@ module decoder (
         mem_read=0; mem_write=0;
         mem_size=2'b10; mem_signext=1;
         reg_write=0; wb_sel=2'b00;
+        alu_src1_sel=2'b00;
 
         case (opcode)
+            7'b0110111: begin // LUI
+                reg_write=1; use_imm=1; alu_src1_sel=2'b10; // zero + imm
+            end
+            7'b0010111: begin // AUIPC
+                reg_write=1; use_imm=1; alu_src1_sel=2'b01; // pc + imm
+            end
             7'b0110011: begin
                 reg_write=1; alu_op=funct3;
                 alu_sub=(funct7==7'b0100000);

@@ -1,6 +1,8 @@
 /* =========================
    LOAD ALIGN
 ========================= */
+`timescale 1ns/1ps
+
 module load_align(
     input wire [1:0] addr_lsb,
     input wire [1:0] size,

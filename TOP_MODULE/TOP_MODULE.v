@@ -20,9 +20,12 @@ module riscv_3stage_top (
     reg [31:0] imem [0:255];
     initial $readmemh("instruction.hex", imem);
 
+    reg [31:0] instr_pc;
     reg [31:0] instr_reg;
-    always @(posedge clk)
+    always @(posedge clk) begin
         instr_reg <= imem[pc[9:2]];
+        instr_pc  <= pc;
+    end
 
     assign instr = instr_reg;
 
@@ -31,11 +34,11 @@ module riscv_3stage_top (
     always @(posedge clk or posedge reset)
         if (reset) begin
             IF_ID_pc <= 0;
-            IF_ID_instr <= 0;
+            IF_ID_instr <= 32'h00000013; // addi x0, x0, 0 (NOP)
         end else if (take_branch) begin
-            IF_ID_instr <= 0;
+            IF_ID_instr <= 32'h00000013; // NOP
         end else if (!stall) begin
-            IF_ID_pc <= pc;
+            IF_ID_pc <= instr_pc;
             IF_ID_instr <= instr;
         end
 
@@ -50,22 +53,26 @@ module riscv_3stage_top (
     wire [1:0] wb_sel, mem_size;
     wire mem_signext;
 
+    wire [1:0] alu_src1_sel;
     decoder DEC(IF_ID_instr, rs1, rs2, rd, alu_op, alu_sub, use_imm,
                 branch, branch_funct3, jal, jalr,
-                mem_read, mem_write, mem_size, mem_signext, reg_write, wb_sel);
+                mem_read, mem_write, mem_size, mem_signext, reg_write, wb_sel, alu_src1_sel);
 
     imm_gen IMM(IF_ID_instr, imm);
 
     reg ID_EX_mem_read;
     reg [4:0] ID_EX_rd;
+    reg [31:0] ID_EX_pc;
 
     always @(posedge clk or posedge reset)
         if (reset || stall) begin
             ID_EX_mem_read <= 0;
             ID_EX_rd <= 0;
+            ID_EX_pc <= 0;
         end else begin
             ID_EX_mem_read <= mem_read;
             ID_EX_rd <= rd;
+            ID_EX_pc <= IF_ID_pc;
         end
 
     assign stall = ID_EX_mem_read &&
@@ -98,16 +105,29 @@ module riscv_3stage_top (
         (ID_WB_reg_write && (ID_WB_rd == rs2) && (rs2 != 0)) ?
         wb_data : fwd_rs2;
 
+    wire [31:0] alu_src1 = (alu_src1_sel == 2'b01) ? IF_ID_pc :
+                           (alu_src1_sel == 2'b10) ? 32'b0 :
+                                                      fwd_rs1;
     wire [31:0] alu_src2 = use_imm ? imm : fwd_rs2;
     wire [31:0] alu_result;
 
-    alu ALU(fwd_rs1, alu_src2, alu_op, alu_sub, alu_result);
+    alu ALU(alu_src1, alu_src2, alu_op, alu_sub, alu_result);
 
     // =====================================================
     // BRANCH
     // =====================================================
-    assign take_branch =
-        (branch && alu_result[0]) || jal || jalr;
+    wire branch_true =
+        (branch_funct3 == 3'b000) ? (fwd_rs1 == fwd_rs2) : // BEQ
+        (branch_funct3 == 3'b001) ? (fwd_rs1 != fwd_rs2) : // BNE
+        (branch_funct3 == 3'b100) ? ($signed(fwd_rs1) < $signed(fwd_rs2)) : // BLT
+        (branch_funct3 == 3'b101) ? ($signed(fwd_rs1) >= $signed(fwd_rs2)) : // BGE
+        (branch_funct3 == 3'b110) ? (fwd_rs1 < fwd_rs2) : // BLTU
+        (branch_funct3 == 3'b111) ? (fwd_rs1 >= fwd_rs2) : // BGEU
+        1'b0;
+
+    wire instr_valid = (IF_ID_instr !== 32'hxxxxxxxx);
+    assign take_branch = instr_valid && (
+        (branch && branch_true) || jal || jalr);
 
     assign target_pc =
         jalr ? {alu_result[31:1], 1'b0} :
@@ -129,6 +149,7 @@ module riscv_3stage_top (
     // -----------------------------
     data_memory DM (
         .clk(clk),
+        .mem_read(mem_read && !uart_sel),
         .mem_write(mem_write && !uart_sel),
         .addr(alu_result),
         .write_data(store_data),
@@ -166,19 +187,21 @@ module riscv_3stage_top (
         mem_aligned
     );
 
-    reg [31:0] ID_WB_alu, ID_WB_mem;
+    reg [31:0] ID_WB_alu, ID_WB_mem, ID_WB_pc;
     reg [1:0] ID_WB_wb_sel;
 
     always @(posedge clk or posedge reset)
         if (reset) begin
             ID_WB_alu <= 0;
             ID_WB_mem <= 0;
+            ID_WB_pc  <= 0;
             ID_WB_rd <= 0;
             ID_WB_reg_write <= 0;
             ID_WB_wb_sel <= 0;
         end else begin
             ID_WB_alu <= alu_result;
             ID_WB_mem <= mem_read ? mem_aligned : 32'b0;
+            ID_WB_pc  <= ID_EX_pc;
             ID_WB_rd <= rd;
             ID_WB_reg_write <= reg_write;
             ID_WB_wb_sel <= wb_sel;
@@ -187,7 +210,7 @@ module riscv_3stage_top (
     assign wb_data =
         (ID_WB_wb_sel == 2'b00) ? ID_WB_alu :
         (ID_WB_wb_sel == 2'b01) ? ID_WB_mem :
-                                 (ID_WB_alu + 4);
+                                 (ID_WB_pc + 4);
 
 endmodule
 
