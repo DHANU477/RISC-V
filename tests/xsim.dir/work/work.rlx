@@ -1,0 +1,13 @@
+0.7
+2020.2
+May 22 2024
+19:03:11
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/ALU/ALU.v,1772558008,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DATA_MEMORY/DATA_MEMORY.v,,alu,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DATA_MEMORY/DATA_MEMORY.v,1772558393,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DECODER/DECODER.v,,data_memory,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DECODER/DECODER.v,1772560078,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/IMMEDIATE_GENERATOR/IMMEDIATE_GENERATOR.v,,decoder,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/IMMEDIATE_GENERATOR/IMMEDIATE_GENERATOR.v,1772558039,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/LOAD_ALIGN/LOAD_ALIGN.v,,imm_gen,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/LOAD_ALIGN/LOAD_ALIGN.v,1772558018,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/pc/pc.v,,load_align,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/REGISTER_FILE/REGISTER_FILE.v,1772558041,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/TOP_MODULE/TOP_MODULE.v,,regfile,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/TOP_MODULE/TOP_MODULE.v,1772562410,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/tests/top_tb.v,,baud_rate_gen;riscv_3stage_top;rx_fsm;tx_fsm;uart_mm,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/pc/pc.v,1771857264,verilog,,C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/REGISTER_FILE/REGISTER_FILE.v,,pc_unit,,,,,,,,
+C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/tests/top_tb.v,1772562088,verilog,,,,top_tb,,,,,,,,

@@ -1,0 +1,61 @@
+// Comprehensive RISC-V Verification Suite
+// Tests: ALU (I/R), Memory (W/H/B), Branches, Jumps
+// Initial Setup
+00000093 // x1 = 0
+06400093 // x1 = 100
+f9c00113 // x2 = -100
+001101b3 // x3 = x2 + x1 (0)
+
+// ALU Immediate Tests
+00a18213 // x4 = x3 + 10 (10)
+00a22293 // x5 = x4 << 10 (10240)
+0012a313 // x6 = x5 < 1 (0)
+00132393 // x7 = x6 < 1 (1)
+0ff3c413 // x8 = x7 ^ 0xff (254)
+00f46493 // x9 = x8 | 0xf (255)
+00f4e513 // x10 = x9 & 0xf (15)
+
+// ALU Register Tests
+002085b3 // x11 = x1 + x2 (0)
+40208633 // x12 = x1 - x2 (200)
+003096b3 // x13 = x1 << x3 (100)
+00b62733 // x14 = x12 < x11 (0)
+00c5b7b3 // x15 = x11 < x12 (1)
+00d74833 // x16 = x14 ^ x13 (100)
+00f858b3 // x17 = x16 >> x15 (50)
+40f85933 // x18 = x16 >>> x15 (50)
+0128e9b3 // x19 = x17 | x18 (50)
+0139fa33 // x20 = x19 & x20 (0)
+
+// Memory Tests (Data at end of hex)
+00000a93 // x21 = 0
+010a8a93 // x21 = 16 (Base for memory tests)
+00bad023 // sw x11, 0(x21)  (Store 0 to M[16])
+00c02023 // sw x12, 0(x0)   (Store 200 to M[0])
+00002b03 // lw x22, 0(x0)   (Load 200 into x22)
+000a9b83 // lh x23, 0(x21)  (Load Half from M[16])
+004a9c03 // lhu x24, 4(x21)
+001a1d03 // lb x26, 1(x20)
+
+// Branch Tests
+00000d93 // x27 = 0
+00100e13 // x28 = 1
+000ded63 // beq x27, x27, 24 (Should jump)
+00000013 // nop (flushed)
+00000013 // nop (flushed)
+01cb0013 // addi x0, x27, 28 (Should skip)
+00000e93 // x29 = 0 (Target)
+
+// Jump Tests
+00c0006f // jal x0, 12 (Jump to address + 12)
+00000013 // nop
+000b0f93 // x31 = 176 (Target)
+000f8067 // jalr x0, 0(x31) (Jump to x31)
+00000013 // nop
+00000013 // nop
+00000013 // nop
+00000013 // Final padding
+00000013
+00000013
+00000013
+00000013

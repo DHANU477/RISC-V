@@ -1,0 +1,1 @@
+-debug "typical" "work.top_tb" -L "work" -s "snapshot_fixed" 

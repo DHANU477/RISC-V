@@ -1,0 +1,13 @@
+// UART Memory-Mapped I/O Demo (with Polling loop)
+100000b7 // addr 0: lui x1, 0x10000 (Base UART)
+04100113 // addr 4: addi x2, x0, 0x41 ('A')
+0020a023 // addr 8: sw x2, 0(x1)     (Start TX)
+0080a183 // addr c: lw x3, 8(x1)     (Poll Loop: Read Stat)
+0021f293 // addr 10: andi x5, x3, 2  (Extract rx_ready bit)
+fe028ee3 // addr 14: beq x5, x0, -4  (If rx_ready is 0, loop back to addr c)
+0040a203 // addr 18: lw x4, 4(x1)     (Read received byte 'A')
+00000013 // addr 1c: nop
+00000013 // addr 20: nop
+
+// Final Halt
+0000006f // JAL x0, 0 (Infinite Loop / Halt)

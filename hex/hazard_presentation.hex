@@ -1,0 +1,8 @@
+// Custom instruction sequence to demonstrate pipeline hazards
+00500093 // addi x1, x0, 5
+00108133 // add x2, x1, x1  (Data Hazard - Forwarding)
+00002183 // lw x3, 0(x0)
+40118233 // sub x4, x3, x1  (Load-Use Hazard - Stall)
+00108463 // beq x1, x1, 8   (Control Hazard - Branch Taken)
+00900293 // addi x5, x0, 9  (Flushed!)
+00a00313 // addi x6, x0, 10 (Branch Target)

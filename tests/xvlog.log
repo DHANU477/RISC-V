@@ -1,0 +1,22 @@
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/ALU/ALU.v" into library work
+INFO: [VRFC 10-311] analyzing module alu
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DATA_MEMORY/DATA_MEMORY.v" into library work
+INFO: [VRFC 10-311] analyzing module data_memory
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/DECODER/DECODER.v" into library work
+INFO: [VRFC 10-311] analyzing module decoder
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/IMMEDIATE_GENERATOR/IMMEDIATE_GENERATOR.v" into library work
+INFO: [VRFC 10-311] analyzing module imm_gen
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/LOAD_ALIGN/LOAD_ALIGN.v" into library work
+INFO: [VRFC 10-311] analyzing module load_align
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/pc/pc.v" into library work
+INFO: [VRFC 10-311] analyzing module pc_unit
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/REGISTER_FILE/REGISTER_FILE.v" into library work
+INFO: [VRFC 10-311] analyzing module regfile
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/TOP_MODULE/TOP_MODULE.v" into library work
+INFO: [VRFC 10-311] analyzing module riscv_3stage_top
+INFO: [VRFC 10-311] analyzing module uart_mm
+INFO: [VRFC 10-311] analyzing module baud_rate_gen
+INFO: [VRFC 10-311] analyzing module tx_fsm
+INFO: [VRFC 10-311] analyzing module rx_fsm
+INFO: [VRFC 10-2263] Analyzing Verilog file "C:/Users/04994/OneDrive/Desktop/dkmproject/RISC/tests/top_tb.v" into library work
+INFO: [VRFC 10-311] analyzing module top_tb
